@@ -11,6 +11,7 @@ class Fluid {
         this.Nx = N;
         this.Ny = M;
         this.h = h;
+        this.scale = this.canvas.height / M / this.h;
         this.overRelaxation = 1.9;
         this.numCells = this.Nx * this.Ny;
         this.u = new Float32Array(this.numCells); // x velocity
@@ -277,11 +278,64 @@ class Fluid {
         this.#drawScalarFieldColor(maxM, minM, this.m, grayscale);
     }
 
-    #drawStreamline() {
-        return
+    #drawStreamline({segLen=0.5, numSegs=15, skip=8}={}) {
+        const len = segLen * this.h;
+
+        for (let i=1; i<this.Nx-1; i+=skip) {
+            for (let j=1; j<this.Ny-1; j+=skip) {
+                let x = (i + 0.5) * this.h;
+                let y = (j + 0.5) * this.h;
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(x * this.scale, y * this.scale);
+
+                for (let n=0; n < numSegs; n++) {
+                    const u = this.sampleField(x, y, U_FIELD);
+                    const v = this.sampleField(x, y, V_FIELD);
+                    x += u * len;
+                    y += v * len;
+                    if (x>this.Nx * this.h) {
+                        break;
+                    }
+                    this.ctx.lineTo(x * this.scale, y * this.scale);
+                }
+
+                this.ctx.stroke();
+            }
+        }
     }
 
-    #drawVelocity() {
-        return
+    #drawVelocity({segLen=2, skip=3}={}) {
+        const len = segLen * this.h;
+        const n = this.Ny;
+        const h = this.h;
+        const h2 = this.h * 0.5;
+        const scale = this.scale;
+        for (let i=1; i<this.Nx-1; i+=skip) {
+            for (let j=1; j<this.Ny-1; j+=skip) {
+                const u = this.u[i*n+j];
+                const v = this.v[i*n+j];
+
+                const x0 = i * h * scale;
+                const x1 = (i * h + u * len) * scale;
+                const y = (j * h + h2) * scale;
+
+                this.ctx.strokeStyle = "blue";
+                this.ctx.beginPath();
+                this.ctx.moveTo(x0, y);
+                this.ctx.lineTo(x1, y);
+                this.ctx.stroke();
+
+                const y0 = j * h * scale;
+                const y1 = (j * h + v * len) * scale;
+                const x = (i * h + h2) * scale;
+
+                this.ctx.strokeStyle = "red";
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y0);
+                this.ctx.lineTo(x, y1);
+                this.ctx.stroke();
+            }
+        }
     }
 }

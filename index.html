@@ -56,7 +56,7 @@
         const pipeH = 0.025 * M;
         const minJ = Math.floor(0.5 * M - 0.5*pipeH);
         const maxJ = Math.floor(0.5 * M + 0.5*pipeH);
-        const invel = 1.5;
+        const invel = 1.6;
         for (let i = 0; i < N; i++) {
             for (let j = 0; j < M; j++) {
                 let s = 1.0;
@@ -72,7 +72,7 @@
             fluid.m[j] = 0.0;
         }
 
-        const obstacle = new Obstacle(0.25, 0.5, 0.05, HEIGHT/domainHeight);
+        const obstacle = new Obstacle(0.5, 0.5, 0.2, HEIGHT/domainHeight);
         
 
         let deltaTime = 1;
@@ -90,7 +90,7 @@
             obstacle.setObstacle(fluid);
             fluid.update(dt, 1.0, 40);
             ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
-            fluid.draw({smoke: true, pressure: false});
+            fluid.draw({smoke: true, pressure: false, streamline: false, velocity: true});
             obstacle.draw(ctx);
             requestAnimationFrame(animate);
             
