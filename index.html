@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Eulerian Fluid Simulation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Eulerian fluid simulator</h1>
+    <canvas id="myCanvas"></canvas>
+
+    <script src="js/fluid.js"></script>
+    <script src="js/colormaps.js"></script>
+    <script src="js/obstacle.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        const WIDTH = 600;
+        const HEIGHT = 400;
+        const res = 100; // number of screen pixels per grid cell
+        const GRID_SCALE = HEIGHT / res;
+        myCanvas.width = WIDTH;
+        myCanvas.height = HEIGHT;
+
+        const ctx = myCanvas.getContext("2d");
+
+        const simHeight = 1.1;
+        const cScale = HEIGHT / simHeight;
+        const simWidth = WIDTH / cScale;
+
+        const dt = 1.0 / 60.0;
+
+        const domainHeight = 1.0;
+        const domainWidth = domainHeight / simHeight * simWidth;
+        const h = domainHeight / res;
+
+        const N = Math.floor(domainWidth / h);
+        const M = Math.floor(domainHeight / h);
+        
+        const density = 1000;
+
+        const fluid = new Fluid(myCanvas, density, N, M, h, GRID_SCALE);
+        const n = fluid.Ny;
+        
+        // tank
+       /*  for (let i = 0; i< fluid.Nx; i++) {
+            for (let j =0; j<fluid.Ny; j++) {
+                let s = 1.0;
+                if (i==0 || i == fluid.Nx-1 || j == fluid.Ny-1) s = 0.0;
+
+                fluid.s[i*n+j] = s;
+            }
+        } */
+
+        // wind tunnel
+        const pipeH = 0.025 * M;
+        const minJ = Math.floor(0.5 * M - 0.5*pipeH);
+        const maxJ = Math.floor(0.5 * M + 0.5*pipeH);
+        const invel = 1.5;
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < M; j++) {
+                let s = 1.0;
+                if (i == 0 || j==0 || j == M-1) s=0.0;
+                fluid.s[i*n+j] = s;
+
+                if (i == 1) {
+                    fluid.u[i*n+j] = invel;
+                }
+            }
+        }
+        for (let j = minJ; j < maxJ; j++) {
+            fluid.m[j] = 0.0;
+        }
+
+        const obstacle = new Obstacle(0.25, 0.5, 0.05, HEIGHT/domainHeight);
+        
+
+        let deltaTime = 1;
+        let lastTime = 0;
+        let time = 0;
+
+        function animate(timestamp) {
+            deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            time += deltaTime;
+            
+            //obstacle.vy = 1.2 * Math.sin(0.01 * time);
+            //obstacle.vx = 1.2 * Math.cos(0.01 * time);
+            obstacle.update(dt);
+            obstacle.setObstacle(fluid);
+            fluid.update(dt, 1.0, 40);
+            ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+            fluid.draw({smoke: true, pressure: false});
+            obstacle.draw(ctx);
+            requestAnimationFrame(animate);
+            
+        }
+
+        animate(0);
+    
+    </script>
+</body>
+</html>
